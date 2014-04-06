@@ -1,0 +1,4 @@
+<resources>
+    <string name="app_name">SamsungFieldTestService</string>
+    <string name="service_mode_permission_description">Access to low-level phone data provided by the Samsung service mode</string>
+</resources>

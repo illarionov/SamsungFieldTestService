@@ -1,0 +1,9 @@
+<component name="libraryTable">
+  <library name="framework-base">
+    <CLASSES>
+      <root url="jar://$PROJECT_DIR$/app/framework/cm-10.2/framework-base.jar!/" />
+    </CLASSES>
+    <JAVADOC />
+    <SOURCES />
+  </library>
+</component>
