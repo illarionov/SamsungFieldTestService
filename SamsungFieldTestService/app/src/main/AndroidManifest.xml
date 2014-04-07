@@ -1,7 +1,7 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
-    package="ru0xdc.sfts.app"
+    package="ru0xdc.sfts.service"
     android:versionCode="1"
-    android:versionName="1.0"
+    android:versionName="1.0.1"
     android:sharedUserId="android.uid.phone">
 
     <uses-sdk
@@ -13,7 +13,7 @@
         android:description="@string/service_mode_permission_description"
         android:protectionLevel="dangerous" />
 
-    <uses-permission android:name="ru0xdc.sfts.app.SERVICE_MODE" />
+    <uses-permission android:name="ru0xdc.sfts.service.SERVICE_MODE" />
 
     <application
         android:allowBackup="false"
