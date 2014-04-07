@@ -9,7 +9,7 @@
         android:targetSdkVersion="19" />
 
     <permission
-        android:name="ru0xdc.sfts.app.SERVICE_MODE"
+        android:name="ru0xdc.sfts.service.SERVICE_MODE"
         android:description="@string/service_mode_permission_description"
         android:protectionLevel="dangerous" />
 
@@ -20,12 +20,12 @@
         android:icon="@android:drawable/ic_menu_preferences">
 
         <service
-            android:name=".FieldTestService"
+            android:name="ru0xdc.sfts.service.FieldTestService"
             android:exported="true"
-            android:permission="ru0xdc.sfts.app.SERVICE_MODE"
+            android:permission="ru0xdc.sfts.service.SERVICE_MODE"
             android:process="com.android.phone">
             <intent-filter>
-                <action android:name="ru0xdc.sfts.app.SERVICE_MODE" />
+                <action android:name="ru0xdc.sfts.service.SERVICE_MODE" />
             </intent-filter>
         </service>
 

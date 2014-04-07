@@ -8,8 +8,8 @@ LOCAL_MODULE_TAGS := optional
 
 LOCAL_SRC_FILES := $(call all-java-files-under, java)
 LOCAL_SRC_FILES += \
-		   aidl/ru0xdc/sfts/app/IOemRawResultListener.aidl \
-		   aidl/ru0xdc/sfts/app/ISamsungServiceMode.aidl
+		   aidl/ru0xdc/sfts/service/IOemRawResultListener.aidl \
+		   aidl/ru0xdc/sfts/service/ISamsungServiceMode.aidl
 
 LOCAL_PACKAGE_NAME := SamsungFieldTestService
 LOCAL_JAVA_LIBRARIES := telephony-common

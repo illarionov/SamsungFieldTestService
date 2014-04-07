@@ -1,8 +1,12 @@
-package ru0xdc.sfts.app;
+package ru0xdc.sfts.service;
 
-import ru0xdc.sfts.app.IOemRawResultListener;
+import ru0xdc.sfts.service.IOemRawResultListener;
 
 interface ISamsungServiceMode {
+
+    List<String> getCpSwVersion();
+    String getFtaSwVersion();
+    String getFtaHwVersion();
 
 	List<String> getCipheringInfo();
 	List<String> getAllVersion();

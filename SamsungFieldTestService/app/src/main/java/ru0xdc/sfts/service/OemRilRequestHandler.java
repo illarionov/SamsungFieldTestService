@@ -1,4 +1,4 @@
-package ru0xdc.sfts.app;
+package ru0xdc.sfts.service;
 
 import android.content.Context;
 import android.content.pm.PackageManager;

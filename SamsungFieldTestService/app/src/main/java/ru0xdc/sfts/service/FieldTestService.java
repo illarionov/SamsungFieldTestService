@@ -1,11 +1,12 @@
-package ru0xdc.sfts.app;
+package ru0xdc.sfts.service;
 
 import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.List;
 import java.util.Queue;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import android.app.Service;
 import android.content.Intent;
@@ -35,6 +36,7 @@ public class FieldTestService extends Service {
     private static final int ID_RESPONSE_PRESS_A_KEY = 7010;
 
     private static final int REQUEST_TIMEOUT = 10000; // ms
+    private static final int REQUEST_VERSION_TIMEOUT = 300; // ms
 
     static final KeyStep GET_BASIC_INFO_KEY_SEQ[] = new KeyStep[] {
             new KeyStep('\0', false),
@@ -80,7 +82,22 @@ public class FieldTestService extends Service {
 	
 	private final ISamsungServiceMode.Stub mBinder = new ISamsungServiceMode.Stub() {
 
-		@Override
+        @Override
+        public List<String> getCpSwVersion() throws RemoteException {
+            return FieldTestService.this.getCpSwVersion();
+        }
+
+        @Override
+        public String getFtaSwVersion() throws RemoteException {
+            return FieldTestService.this.getFtaSwVersion();
+        }
+
+        @Override
+        public String getFtaHwVersion() throws RemoteException {
+            return FieldTestService.this.getFtaHwVersion();
+        }
+
+        @Override
 		public List<String> getCipheringInfo() throws RemoteException {
 			return FieldTestService.this.getCipheringInfo();
 		}
@@ -118,6 +135,52 @@ public class FieldTestService extends Service {
 		}
 	};
 
+    synchronized List<String> getCpSwVersion() throws RemoteException {
+        String version = "";
+        String compileDate = "";
+        String compileTime = "";
+        List<String> strings =  executeServiceModeCommand(OemCommands.OEM_SM_TYPE_TEST_MANUAL,
+                OemCommands.OEM_SM_TYPE_SUB_SW_VERSION_ENTER, null, REQUEST_VERSION_TIMEOUT);
+        Pattern versionPattern = Pattern.compile("CP\\s+SW\\s+VERSION\\s*[:;]\\s*(.+)\\s*$", Pattern.CASE_INSENSITIVE);
+        Pattern compileDatePattern = Pattern.compile("CP\\s+SW\\s+COMPILE\\s+DATE\\s*[:;]\\s*(.+)\\s*$", Pattern.CASE_INSENSITIVE);
+        Pattern compileTimePattern = Pattern.compile("CP\\s+SW\\s+COMPILE\\s+TIME\\s*[:;]\\s*(.+)\\s*$", Pattern.CASE_INSENSITIVE);
+
+        for (String str: strings) {
+            if (str == null) continue;
+            Matcher matcher = versionPattern.matcher(str);
+            if (matcher.matches()) version = matcher.group(1);
+            matcher = compileDatePattern.matcher(str);
+            if (matcher.matches()) compileDate = matcher.group(1);
+            matcher = compileTimePattern.matcher(str);
+            if (matcher.matches()) compileTime = matcher.group(1);
+        }
+        return new ArrayList<String>(Arrays.asList(version, compileDate, compileTime));
+    }
+
+    synchronized String getFtaSwVersion() throws RemoteException {
+        List<String> strings =  executeServiceModeCommand(OemCommands.OEM_SM_TYPE_TEST_MANUAL,
+                OemCommands.OEM_SM_TYPE_SUB_FTA_SW_VERSION_ENTER, null, REQUEST_VERSION_TIMEOUT);
+        Pattern ftaSwVersionPattern = Pattern.compile("FTA\\s+SW\\s+VERSION\\s*[:;]\\s*(.+)\\s*$", Pattern.CASE_INSENSITIVE);
+        for (String str: strings) {
+            if (str == null) continue;
+            Matcher matcher = ftaSwVersionPattern.matcher(str);
+            if (matcher.matches()) return matcher.group(1);
+        }
+        return null;
+    }
+
+    synchronized String getFtaHwVersion() throws RemoteException {
+        List<String> strings =  executeServiceModeCommand(OemCommands.OEM_SM_TYPE_TEST_MANUAL,
+                OemCommands.OEM_SM_TYPE_SUB_FTA_HW_VERSION_ENTER, null, REQUEST_VERSION_TIMEOUT);
+        Pattern ftaHwVersionPattern = Pattern.compile("FTA\\s+HW\\s+VERSION\\s*[:;]\\s*(.+)\\s*$", Pattern.CASE_INSENSITIVE);
+        for (String str: strings) {
+            if (str == null) continue;
+            Matcher matcher = ftaHwVersionPattern.matcher(str);
+            if (matcher.matches()) return matcher.group(1);
+        }
+        return null;
+    }
+
     synchronized List<String> getCipheringInfo() throws RemoteException {
         return executeServiceModeCommand(
                 OemCommands.OEM_SM_TYPE_TEST_MANUAL,
@@ -150,8 +213,13 @@ public class FieldTestService extends Service {
         );
     }
 
+    private List<String> executeServiceModeCommand(int type,int subtype,
+                                                                java.util.Collection<? extends KeyStep> keySeqence) {
+        return executeServiceModeCommand(type, subtype, keySeqence, REQUEST_TIMEOUT);
+    }
+
     private synchronized List<String> executeServiceModeCommand(int type,int subtype,
-        java.util.Collection<? extends KeyStep> keySeqence) {
+        java.util.Collection<? extends KeyStep> keySeqence, int timeout) {
         if (mPhone == null) {
             Log.e(TAG, "default phone is null");
             return null;

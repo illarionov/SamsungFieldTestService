@@ -1,10 +1,17 @@
-package ru0xdc.ssp.client;
+package ru0xdc.sfts.client;
 
 import android.app.Activity;
+import android.app.AlertDialog;
 import android.content.ComponentName;
 import android.content.Context;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.ServiceConnection;
+import android.content.pm.ApplicationInfo;
+import android.content.pm.PackageInfo;
+import android.content.pm.PackageManager;
+import android.content.pm.ResolveInfo;
+import android.net.Uri;
 import android.os.Bundle;
 import android.os.IBinder;
 import android.os.RemoteException;
@@ -17,8 +24,8 @@ import com.cyanogenmod.samsungservicemode.OemCommands;
 
 import java.util.List;
 
-import ru0xdc.sfts.app.IOemRawResultListener;
-import ru0xdc.sfts.app.ISamsungServiceMode;
+import ru0xdc.sfts.service.IOemRawResultListener;
+import ru0xdc.sfts.service.ISamsungServiceMode;
 
 public class MainActivity extends Activity {
     private static final String TAG = "MainActivity";
@@ -30,14 +37,18 @@ public class MainActivity extends Activity {
     boolean mBound = false;
     ISamsungServiceMode mService = null;
 
-    private TextView mVersionTextView, mBasicInfoTextView, mNeighboursTextView, mCipheringInfoTextView;
+    private TextView mCpSwVersion, mFtaSwVersion, mFtaHwVersion, mVersionTextView,
+            mBasicInfoTextView, mNeighboursTextView, mCipheringInfoTextView;
 
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
-        mVersionTextView = (TextView)findViewById(R.id.version);
+        mCpSwVersion = (TextView)findViewById(R.id.cpSwVersion);
+        mFtaSwVersion = (TextView)findViewById(R.id.ftaSwVersion);
+        mFtaHwVersion = (TextView)findViewById(R.id.ftaHwVersion);
+        mVersionTextView = (TextView)findViewById(R.id.versionAll);
         mBasicInfoTextView = (TextView)findViewById(R.id.basic_info);
         mNeighboursTextView = (TextView)findViewById(R.id.neighbours);
         mCipheringInfoTextView = (TextView)findViewById(R.id.ciphering_info);
@@ -46,11 +57,18 @@ public class MainActivity extends Activity {
     @Override
     protected void onStart() {
         super.onStart();
-        // Bind to LocalService
-        Intent intent = new Intent("ru0xdc.sfts.app.SERVICE_MODE");
-        if (!bindService(intent, mConnection, Context.BIND_AUTO_CREATE)) {
-            Log.e(TAG, "bindService() error");
+        PackageManager pm = getPackageManager();
+        ResolveInfo service = pm.resolveService(getServiceInent(), 0);
+        if (service != null) {
+            Intent intent = new Intent("ru0xdc.sfts.service.SERVICE_MODE");
+            if (!bindService(intent, mConnection, Context.BIND_AUTO_CREATE)) {
+                Log.e(TAG, "bindService() error");
+                findViewById(R.id.button_load).setEnabled(false);
+                notifyServiceNotInstalled();
+            }
+        } else {
             findViewById(R.id.button_load).setEnabled(false);
+            notifyServiceNotInstalled();
         }
     }
 
@@ -71,10 +89,36 @@ public class MainActivity extends Activity {
 
     public void runTest(View v) {
         if (!mBound) return;
+        updateMainVersion();
         updateAllVersion();
         updateBasicInfo();
         updateNeighbours();
         updateCipherInfo();
+    }
+
+    private Intent getServiceInent() {
+        return new Intent("ru0xdc.sfts.service.SERVICE_MODE");
+    }
+
+    private void notifyServiceNotInstalled() {
+        AlertDialog ad = new AlertDialog.Builder(this)
+                .setTitle(getString(R.string.service_not_installed_title))
+                .setMessage(R.string.service_not_installed_message)
+                .setPositiveButton(android.R.string.ok, new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+                        dialog.dismiss();
+                    }
+                })
+                .setNeutralButton(R.string.samsung_field_test_service_button, new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+                        Intent i = new Intent(Intent.ACTION_VIEW, Uri.parse(getString(R.string.samsung_field_test_service_home)));
+                        startActivity(i);
+                    }
+                })
+                .create();
+        ad.show();
     }
 
     void updateCipherInfo() {
@@ -85,6 +129,21 @@ public class MainActivity extends Activity {
             } else {
                 mCipheringInfoTextView.setText(TextUtils.join("\n", info));
             }
+        } catch (RemoteException e) {
+            e.printStackTrace();
+        }
+    }
+
+    void updateMainVersion() {
+        try {
+            List<String> cpSwVersion = mService.getCpSwVersion();
+            mCpSwVersion.setText("CP SW version: " + cpSwVersion.get(0)
+                    + "\nCompile date: " + cpSwVersion.get(1)
+                    + "\nCompile time: " + cpSwVersion.get(2)
+            );
+
+            mFtaHwVersion.setText("FTA HW Version: " + mService.getFtaHwVersion());
+            mFtaSwVersion.setText("FTA SW Version: " + mService.getFtaSwVersion());
         } catch (RemoteException e) {
             e.printStackTrace();
         }
@@ -157,7 +216,7 @@ public class MainActivity extends Activity {
         }
     }
 
-    void runMonitor() {
+    void runMonitorRawRil() {
         try {
             byte[] data = OemCommands.getEnterServiceModeData(
                     OemCommands.OEM_SM_TYPE_MONITOR,
@@ -171,7 +230,7 @@ public class MainActivity extends Activity {
         }
     }
 
-    void getBasicInfo() {
+    void getBasicInfoRawRil() {
         try {
             byte[] data = OemCommands.getEnterServiceModeData(
                     OemCommands.OEM_SM_TYPE_TEST_MANUAL,
@@ -293,5 +352,6 @@ public class MainActivity extends Activity {
             mBound = false;
         }
     };
+
 
 }

@@ -2,5 +2,9 @@
 <resources>
 
     <string name="app_name">SamsungFieldTestClient</string>
+    <string name="service_not_installed_message">Please install SamsungFieldTestService as system application</string>
+    <string name="service_not_installed_title">Samsung Field Test Service not installed</string>
+    <string name="samsung_field_test_service_home">https://github.com/illarionov/SamsungFieldTestService</string>
+    <string name="samsung_field_test_service_button">SamsungFieldTestService</string>
 
 </resources>

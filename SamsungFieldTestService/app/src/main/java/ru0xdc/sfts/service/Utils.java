@@ -1,7 +1,9 @@
-package ru0xdc.sfts.app;
+package ru0xdc.sfts.service;
 
+import android.text.TextUtils;
 import android.util.Log;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
@@ -42,7 +44,11 @@ public final class Utils {
             }
             display[i] = new String(aob, offset, byteCount).trim();
         }
-        return Arrays.asList(display);
+
+        int newLength = display.length;
+        while (newLength > 0 && TextUtils.isEmpty(display[newLength-1])) newLength -= 1;
+
+        return Arrays.asList(Arrays.copyOf(display, newLength));
     }
 
 }
